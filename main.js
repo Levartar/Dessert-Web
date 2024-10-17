@@ -1,3 +1,5 @@
+import { updateLoadingProgress } from './loading.js';
+
 // Set up scene, camera, and renderer
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -9,20 +11,36 @@ document.body.appendChild(renderer.domElement);
 const tileSize = 20; // Size of each tile
 const gridSize = 5; // 10x10 grid
 const tileCount = 4; // 9 different tiles
+const totalTiles = gridSize * gridSize; // Total number of tiles to load
+let loadedTileModels = 0; // Count of loaded tile models
+let addedTiles = 0; // Count of tiles added to the scene
 const tiles = []; // Array to store loaded tiles
 
+
+// References to the loading screen elements
+const loadingScreen = document.getElementById('loading-screen');
+const loadingText = document.getElementById('loading-text');
+const loadingBar = document.getElementById('loading-bar');
+
+
+
 // Load all tiles and store them in the array
+
 const loader = new THREE.GLTFLoader();
 for (let i = 1; i <= tileCount; i++) {
-    tileName = `Assets/3D/Tile-${i}.glb`
-    console.log(tileName)
-    loader.load(tileName, (gltf) => {
-        desertTile = gltf.scene;
-        tiles.push(desertTile);
-        if (tiles.length === tileCount) {
-            // Once all tiles are loaded, generate the grid
+    loader.load(`Assets/3D/Tile-${i}.glb`, (gltf) => {
+        tiles.push(gltf.scene);
+        loadedTileModels++;
+
+        // Update the loading progress based on loaded models
+        updateLoadingProgress(loadedTileModels, tileCount);
+
+        // Once all models are loaded, generate the grid
+        if (loadedTileModels === tileCount) {
             generateDesertGrid();
         }
+    }, undefined, (error) => {
+        console.error('Error loading tile:', error);
     });
     console.log(tiles)
 }
@@ -33,7 +51,7 @@ function generateDesertGrid() {
         for (let j = 0; j < gridSize; j++) {
             // Randomly select a tile from the loaded tiles
             const randomTileIndex = Math.floor(Math.random() * tileCount);
-            console.log("randomtileindex: "+randomTileIndex)
+            console.log("randomtileindex: " + randomTileIndex)
             const tile = tiles[randomTileIndex].clone();
 
             // Position the tile in the grid
@@ -41,10 +59,13 @@ function generateDesertGrid() {
 
             // Add the tile to the scene
             scene.add(tile);
+
+            // Update the loading progress
+            addedTiles++;
+            updateLoadingProgress(addedTiles, totalTiles);
         }
     }
 }
-
 
 //let dessert;
 //loader.load('Assets/3D/Tile-Start.glb', (gltf) => {
@@ -126,8 +147,8 @@ function animate() {
         // Hovering animation (up and down motion)
         hoverTime += hoverSpeed;
         spaceship.position.y = Math.sin(hoverTime) * hoverHeight;
-        console.log("spaceship y: "+spaceship.position.y)
-        console.log("cameraholder y: "+cameraHolder.position.y)
+        //console.log("spaceship y:", spaceship.position.y)
+        //console.log("cameraholder y:", cameraHolder.position.y)
 
         // Calculate the movement direction
         spaceshipDirection.set(0, 0, 0); // Reset direction
